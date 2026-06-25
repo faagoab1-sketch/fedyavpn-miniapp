@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Fedya VPN</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0b0f1a;--surface:#111827;--card:#161f31;--border:#1e2d42;
+  --accent:#3b82f6;--accent2:#6366f1;--green:#22c55e;--red:#ef4444;
+  --yellow:#f59e0b;--text:#e2e8f0;--muted:#64748b;--r:13px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;padding-bottom:30px}
+
+/* LOADER */
+#loader{position:fixed;inset:0;background:var(--bg);z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .4s}
+#loader.hide{opacity:0;pointer-events:none}
+.spin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-text{font-size:13px;color:var(--muted)}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:11px 16px 10px;background:var(--surface);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:50}
+.logo{display:flex;align-items:center;gap:9px}
+.logo-ico{width:30px;height:30px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.logo-txt{font-size:14px;font-weight:700;letter-spacing:-.3px}
+.logo-txt b{color:var(--accent)}
+.hdr-right{display:flex;align-items:center;gap:10px}
+
+/* LANG SWITCHER */
+.lang-sw{display:flex;gap:3px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:3px}
+.lang-btn{padding:3px 7px;border:none;background:none;cursor:pointer;font-family:inherit;
+  font-size:11px;font-weight:600;color:var(--muted);border-radius:5px;transition:all .2s}
+.lang-btn.on{background:var(--accent);color:#fff}
+
+/* CURRENCY SWITCHER */
+.cur-sw{display:flex;gap:3px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:3px}
+.cur-btn{padding:3px 7px;border:none;background:none;cursor:pointer;font-family:inherit;
+  font-size:11px;font-weight:600;color:var(--muted);border-radius:5px;transition:all .2s}
+.cur-btn.on{background:var(--green);color:#fff}
+
+/* CONN DOT */
+.dot-wrap{display:flex;align-items:center;gap:5px;font-size:11px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:all .5s}
+.dot.on{background:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.2)}
+.dot.off{background:var(--red)}
+#dot-lbl{color:var(--muted);transition:color .4s;font-size:10px}
+
+/* TABS */
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border-bottom:1px solid var(--border)}
+.tab{padding:11px 8px;border:none;background:none;cursor:pointer;font-family:inherit;
+  font-size:13px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;
+  transition:color .2s;display:flex;align-items:center;justify-content:center;gap:5px}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* PAGES */
+.pg{display:none;padding:14px 14px 0}
+.pg.on{display:block}
+.sec{font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--muted);
+  text-transform:uppercase;margin-bottom:10px;margin-top:16px}
+.sec:first-child{margin-top:0}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;margin-bottom:10px}
+
+/* USER CARD */
+.user-card{display:flex;align-items:center;gap:12px}
+.ava{width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;font-weight:700}
+.u-name{font-size:14px;font-weight:600}
+.u-sub{display:flex;align-items:center;gap:6px;margin-top:3px}
+.pill{border-radius:5px;padding:2px 8px;font-size:10px;font-weight:600}
+.g{background:rgba(34,197,94,.15);color:var(--green)}
+.r{background:rgba(239,68,68,.15);color:var(--red)}
+.y{background:rgba(245,158,11,.15);color:var(--yellow)}
+.u-id{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+
+/* TRAFFIC */
+.tr-row{display:flex;justify-content:space-between;margin-bottom:7px}
+.tr-lbl{font-size:11px;color:var(--muted)}
+.tr-val{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text)}
+.bar{height:6px;background:var(--border);border-radius:99px;overflow:hidden}
+.bar-f{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));
+  width:0%;transition:width 1s ease}
+
+/* EXPIRY */
+.exp-card{display:flex;justify-content:space-between;align-items:center}
+.exp-lbl{font-size:11px;color:var(--muted);margin-bottom:3px}
+.exp-val{font-size:14px;font-weight:600}
+
+/* SUB LINK */
+.sub-url{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:9px 10px;word-break:break-all;margin:9px 0;line-height:1.6}
+.sub-title{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+
+/* CONFIG ITEMS */
+.cfg-item{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px 13px;margin-bottom:8px}
+.cfg-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.cfg-name{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.cfg-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px}
+.vless{background:rgba(99,102,241,.2);color:#a5b4fc}
+.trojan{background:rgba(245,158,11,.15);color:var(--yellow)}
+.ss{background:rgba(34,197,94,.15);color:var(--green)}
+.vmess{background:rgba(59,130,246,.15);color:#93c5fd}
+.cfg-url{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);
+  background:var(--surface);border:1px solid var(--border);border-radius:7px;
+  padding:7px 9px;word-break:break-all;margin-bottom:8px;line-height:1.6;max-height:58px;overflow:hidden}
+.row{display:flex;gap:6px}
+
+/* BUTTONS */
+.btn{flex:1;padding:9px 5px;border:1.5px solid var(--border);background:var(--surface);
+  border-radius:9px;font-family:inherit;font-size:11px;font-weight:600;color:var(--text);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .2s}
+.btn:active{transform:scale(.95)}
+.btn.cp{border-color:var(--green);color:var(--green)}
+.btn-main{width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;border-radius:var(--r);font-family:inherit;font-size:14px;font-weight:700;color:#fff;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:opacity .2s,transform .15s;margin-top:4px}
+.btn-main:active{transform:scale(.97);opacity:.9}
+.btn-main:disabled{opacity:.35;cursor:not-allowed}
+.btn-ghost{width:100%;padding:11px;border:1px solid var(--border);background:transparent;
+  border-radius:var(--r);font-family:inherit;font-size:13px;font-weight:500;color:var(--muted);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;transition:all .2s}
+.btn-ghost:active{color:var(--text);border-color:var(--accent)}
+
+/* PLANS */
+.plan{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);
+  padding:13px;cursor:pointer;transition:border-color .2s,transform .15s;position:relative;
+  overflow:hidden;margin-bottom:9px}
+.plan:active{transform:scale(.98)}
+.plan.sel{border-color:var(--accent);background:#0f1c34}
+.plan.hot::after{content:attr(data-hot);position:absolute;top:0;right:0;
+  background:var(--accent);font-size:10px;font-weight:700;color:#fff;
+  padding:3px 10px;border-bottom-left-radius:10px}
+.plan-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px}
+.plan-n{font-size:14px;font-weight:700}
+.plan-p{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--accent)}
+.plan-p small{font-size:11px;color:var(--muted);font-family:'Inter',sans-serif;font-weight:400}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.tg{background:var(--surface);border:1px solid var(--border);border-radius:6px;
+  padding:3px 8px;font-size:10px;color:var(--muted)}
+.tg.hi{color:var(--text);border-color:#2d3f5e}
+
+/* PERIOD */
+.periods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
+.per{padding:9px 4px;background:var(--card);border:1.5px solid var(--border);
+  border-radius:10px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;
+  color:var(--muted);text-align:center;transition:all .2s}
+.per.sel{border-color:var(--accent);color:var(--accent);background:#0f1c34}
+.per-s{font-size:9px;color:var(--green);display:block;margin-top:2px}
+
+/* PAY */
+.pays{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+.pay{padding:10px;background:var(--card);border:1.5px solid var(--border);
+  border-radius:10px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;
+  color:var(--muted);display:flex;align-items:center;justify-content:center;gap:5px;transition:all .2s}
+.pay.sel{border-color:var(--accent);color:var(--text)}
+
+/* TOTAL */
+.total{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:13px 15px;display:flex;justify-content:space-between;align-items:center;margin-bottom:11px}
+.tot-lbl{font-size:12px;color:var(--muted);margin-bottom:2px}
+.tot-desc{font-size:10px;color:var(--muted)}
+.tot-price{font-family:'JetBrains Mono',monospace;font-size:21px;font-weight:700}
+.tot-price span{font-size:12px;color:var(--muted);font-family:'Inter',sans-serif;font-weight:400}
+
+/* ERROR / EMPTY */
+.err{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);
+  border-radius:var(--r);padding:13px;text-align:center;margin-bottom:11px;display:none}
+.err p{font-size:12px;color:var(--red);line-height:1.6}
+.empty{text-align:center;padding:26px 20px;color:var(--muted);font-size:13px;display:none}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(90px);
+  background:#1e2d42;border:1px solid var(--border);color:var(--text);
+  padding:9px 18px;border-radius:99px;font-size:12px;font-weight:500;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:300;
+  white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.5);pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="spin"></div>
+  <div class="load-text" id="load-txt">Loading...</div>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="logo">
+    <div class="logo-ico">🌊</div>
+    <div class="logo-txt">Fedya<b>VPN</b></div>
+  </div>
+  <div class="hdr-right">
+    <!-- Language -->
+    <div class="lang-sw">
+      <button class="lang-btn on" onclick="setLang('uz')">UZ</button>
+      <button class="lang-btn" onclick="setLang('ru')">RU</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+    </div>
+    <!-- Currency -->
+    <div class="cur-sw">
+      <button class="cur-btn on" onclick="setCur('uzs')">UZS</button>
+      <button class="cur-btn" onclick="setCur('rub')">RUB</button>
+    </div>
+    <!-- Dot -->
+    <div class="dot-wrap">
+      <div class="dot" id="dot"></div>
+      <span id="dot-lbl">...</span>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab on" id="tab-plans" onclick="showTab('plans')" data-i="tab_plans">💎 Tariflar</button>
+  <button class="tab" id="tab-vpn" onclick="showTab('vpn')" data-i="tab_vpn">🔑 Mening VPN</button>
+</div>
+
+<!-- PAGE: PLANS -->
+<div class="pg on" id="pg-plans">
+
+  <div class="sec" data-i="sec_plans"></div>
+
+  <div class="plan hot sel" id="pl-pro" data-hot="🔥 Mashhur" onclick="selPlan('pro')">
+    <div class="plan-h">
+      <div class="plan-n">🚀 Pro</div>
+      <div class="plan-p" id="pp-pro">250 000 <small id="cur-lbl-pro">so'm/oy</small></div>
+    </div>
+    <div class="tags">
+      <span class="tg hi" data-i="unlimited_traffic">♾️ Cheksiz traffic</span>
+      <span class="tg" data-i="devices_3">📱 3 qurilma</span>
+      <span class="tg" data-i="servers_20">🌍 20+ server</span>
+      <span class="tg hi">⚡ 1 Gbps</span>
+    </div>
+  </div>
+
+  <div class="plan" id="pl-basic" onclick="selPlan('basic')">
+    <div class="plan-h">
+      <div class="plan-n">⚡ Basic</div>
+      <div class="plan-p" id="pp-basic">150 000 <small id="cur-lbl-basic">so'm/oy</small></div>
+    </div>
+    <div class="tags">
+      <span class="tg">📦 50 GB</span>
+      <span class="tg" data-i="devices_1">👤 1 qurilma</span>
+      <span class="tg" data-i="servers_5">🌍 5 server</span>
+    </div>
+  </div>
+
+  <div class="plan" id="pl-ultra" onclick="selPlan('ultra')">
+    <div class="plan-h">
+      <div class="plan-n">👑 Ultra</div>
+      <div class="plan-p" id="pp-ultra">450 000 <small id="cur-lbl-ultra">so'm/oy</small></div>
+    </div>
+    <div class="tags">
+      <span class="tg hi" data-i="unlimited_traffic">♾️ Cheksiz traffic</span>
+      <span class="tg hi" data-i="devices_10">📲 10 qurilma</span>
+      <span class="tg" data-i="all_servers">🌍 Barcha serverlar</span>
+      <span class="tg hi" data-i="dedicated_ip">🛡️ Dedikated IP</span>
+    </div>
+  </div>
+
+  <div class="sec" data-i="sec_period"></div>
+  <div class="periods">
+    <button class="per sel" onclick="selPer(1,this)" data-i="per_1">1 oy</button>
+    <button class="per" onclick="selPer(3,this)"><span data-i="per_3">3 oy</span><span class="per-s">−10%</span></button>
+    <button class="per" onclick="selPer(12,this)"><span data-i="per_12">1 yil</span><span class="per-s">−25%</span></button>
+  </div>
+
+  <div class="sec" data-i="sec_pay"></div>
+  <div class="pays">
+    <button class="pay sel" onclick="selPay(this)" data-i="pay_card">💳 Karta</button>
+    <button class="pay" onclick="selPay(this)">⭐ Stars</button>
+    <button class="pay" onclick="selPay(this)">₿ Crypto</button>
+    <button class="pay" onclick="selPay(this)" data-i="pay_payme">🅿️ Payme</button>
+  </div>
+
+  <div class="total">
+    <div>
+      <div class="tot-lbl" data-i="total_label">Jami to'lov</div>
+      <div class="tot-desc" id="tot-desc">Pro • 1 oy</div>
+    </div>
+    <div class="tot-price" id="tot-price">250 000 <span id="cur-sym">so'm</span></div>
+  </div>
+
+  <button class="btn-main" id="buy-btn" onclick="doBuy()" data-i="btn_buy">💳 To'lovga o'tish</button>
+</div>
+
+<!-- PAGE: VPN -->
+<div class="pg" id="pg-vpn">
+
+  <div class="card user-card" id="u-card">
+    <div class="ava" id="u-ava">?</div>
+    <div>
+      <div class="u-name" id="u-name">—</div>
+      <div class="u-sub">
+        <span class="pill g" id="u-status">...</span>
+        <span class="u-id" id="u-un"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="tr-row">
+      <span class="tr-lbl" data-i="traffic_used">📊 Sarflangan traffic</span>
+      <span class="tr-val" id="tr-txt">— GB / —</span>
+    </div>
+    <div class="bar"><div class="bar-f" id="bar-f"></div></div>
+  </div>
+
+  <div class="card exp-card">
+    <div>
+      <div class="exp-lbl" data-i="exp_label">📅 Obuna tugaydi</div>
+      <div class="exp-val" id="exp-date">—</div>
+    </div>
+    <div class="pill g" id="days-pill">—</div>
+  </div>
+
+  <div class="card" id="sub-card" style="display:none">
+    <div class="sub-title">🔗 <span data-i="sub_link_title">Obuna linki</span></div>
+    <div class="sub-url" id="sub-url">—</div>
+    <div class="row">
+      <button class="btn" onclick="cpSub(this)" data-i="btn_copy">📋 Nusxa</button>
+      <button class="btn" onclick="openSub()" data-i="btn_open">🌐 Ochish</button>
+    </div>
+  </div>
+
+  <div class="sec" data-i="sec_configs"></div>
+  <div id="cfgs"></div>
+  <div class="empty" id="cfgs-empty" data-i="no_configs">Konfiguratsiya topilmadi 😴</div>
+  <div class="err" id="vpn-err"><p id="vpn-err-msg"></p></div>
+
+  <button class="btn-ghost" onclick="loadVPN()" data-i="btn_refresh">🔄 Yangilash</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════
+const PANEL = 'https://panel.fedya.online';
+const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiNWY1YmVhN2EtYWUyNC00Y2RmLTg0ZTQtOTgyNTU3MzRlZGJkIiwidXNlcm5hbWUiOm51bGwsInJvbGUiOiJBUEkiLCJpYXQiOjE3ODIzNzc0MDgsImV4cCI6MTA0MjIyOTEwMDh9.vceLB4X32bndB5LDk53yxngMVgMh-pKvAC6sn85QE0w';
+
+const tg = window.Telegram?.WebApp;
+if(tg){ tg.ready(); tg.expand(); tg.setHeaderColor('#111827'); tg.setBackgroundColor('#0b0f1a'); }
+
+// ══════════════════════════════════════════
+//  TRANSLATIONS
+// ══════════════════════════════════════════
+const T = {
+  uz: {
+    load: "Yuklanmoqda...",
+    tab_plans: "💎 Tariflar",
+    tab_vpn: "🔑 Mening VPN",
+    sec_plans: "Tarif tanlang",
+    sec_period: "Muddat",
+    sec_pay: "To'lov usuli",
+    sec_configs: "Konfiguratsiyalar",
+    unlimited_traffic: "♾️ Cheksiz traffic",
+    devices_1: "👤 1 qurilma",
+    devices_3: "📱 3 qurilma",
+    devices_10: "📲 10 qurilma",
+    servers_5: "🌍 5 server",
+    servers_20: "🌍 20+ server",
+    all_servers: "🌍 Barcha serverlar",
+    dedicated_ip: "🛡️ Dedikated IP",
+    per_1: "1 oy",
+    per_3: "3 oy",
+    per_12: "1 yil",
+    pay_card: "💳 Karta",
+    pay_payme: "🅿️ Payme",
+    total_label: "Jami to'lov",
+    btn_buy: "💳 To'lovga o'tish",
+    btn_copy: "📋 Nusxa",
+    btn_open: "🌐 Ochish",
+    btn_refresh: "🔄 Yangilash",
+    traffic_used: "📊 Sarflangan traffic",
+    exp_label: "📅 Obuna tugaydi",
+    sub_link_title: "Obuna linki",
+    no_configs: "Konfiguratsiya topilmadi 😴",
+    copied: "📋 Nusxalandi!",
+    copied_btn: "✅ Nusxalandi",
+    days: " kun",
+    expired: "Tugagan",
+    unlimited: "Cheksiz",
+    status_active: "✅ Faol",
+    status_limited: "⚠️ Cheklangan",
+    status_disabled: "❌ O'chirilgan",
+    status_expired: "⏰ Muddati tugagan",
+    err_no_tg: "Telegram ID topilmadi. Mini appni botdan oching.",
+    err_not_found: "Bu Telegram akkaunt panelda topilmadi.\nAvval admin bilan bog'laning.",
+    err_other: "Xato: ",
+    err_cors: "\n\nPanel CORS sozlamalarini tekshiring.",
+    buy_loading: "⏳ Yuklanmoqda...",
+    buy_demo: "💳 To'lov tizimi ulash kerak",
+    per_month: "/oy",
+    hot: "🔥 Mashhur",
+    online: "Online",
+    offline: "Offline",
+    plan_basic: "Basic", plan_pro: "Pro", plan_ultra: "Ultra",
+    ml_1: "1 oy", ml_3: "3 oy", ml_12: "1 yil",
+  },
+  ru: {
+    load: "Загрузка...",
+    tab_plans: "💎 Тарифы",
+    tab_vpn: "🔑 Мой VPN",
+    sec_plans: "Выберите тариф",
+    sec_period: "Период",
+    sec_pay: "Способ оплаты",
+    sec_configs: "Конфигурации",
+    unlimited_traffic: "♾️ Безлимитный трафик",
+    devices_1: "👤 1 устройство",
+    devices_3: "📱 3 устройства",
+    devices_10: "📲 10 устройств",
+    servers_5: "🌍 5 серверов",
+    servers_20: "🌍 20+ серверов",
+    all_servers: "🌍 Все серверы",
+    dedicated_ip: "🛡️ Выделенный IP",
+    per_1: "1 мес",
+    per_3: "3 мес",
+    per_12: "1 год",
+    pay_card: "💳 Карта",
+    pay_payme: "🅿️ Payme",
+    total_label: "Итого к оплате",
+    btn_buy: "💳 Перейти к оплате",
+    btn_copy: "📋 Копировать",
+    btn_open: "🌐 Открыть",
+    btn_refresh: "🔄 Обновить",
+    traffic_used: "📊 Использованный трафик",
+    exp_label: "📅 Подписка истекает",
+    sub_link_title: "Ссылка подписки",
+    no_configs: "Конфигурации не найдены 😴",
+    copied: "📋 Скопировано!",
+    copied_btn: "✅ Скопировано",
+    days: " дн",
+    expired: "Истёк",
+    unlimited: "Безлимит",
+    status_active: "✅ Активен",
+    status_limited: "⚠️ Ограничен",
+    status_disabled: "❌ Отключён",
+    status_expired: "⏰ Истёк",
+    err_no_tg: "Telegram ID не найден. Откройте через бота.",
+    err_not_found: "Этот Telegram аккаунт не найден в панели.\nСвяжитесь с администратором.",
+    err_other: "Ошибка: ",
+    err_cors: "\n\nПроверьте настройки CORS панели.",
+    buy_loading: "⏳ Загрузка...",
+    buy_demo: "💳 Платёжная система не подключена",
+    per_month: "/мес",
+    hot: "🔥 Популярный",
+    online: "Online",
+    offline: "Offline",
+    plan_basic: "Basic", plan_pro: "Pro", plan_ultra: "Ultra",
+    ml_1: "1 мес", ml_3: "3 мес", ml_12: "1 год",
+  },
+  en: {
+    load: "Loading...",
+    tab_plans: "💎 Plans",
+    tab_vpn: "🔑 My VPN",
+    sec_plans: "Choose a plan",
+    sec_period: "Period",
+    sec_pay: "Payment method",
+    sec_configs: "Configurations",
+    unlimited_traffic: "♾️ Unlimited traffic",
+    devices_1: "👤 1 device",
+    devices_3: "📱 3 devices",
+    devices_10: "📲 10 devices",
+    servers_5: "🌍 5 servers",
+    servers_20: "🌍 20+ servers",
+    all_servers: "🌍 All servers",
+    dedicated_ip: "🛡️ Dedicated IP",
+    per_1: "1 mo",
+    per_3: "3 mo",
+    per_12: "1 yr",
+    pay_card: "💳 Card",
+    pay_payme: "🅿️ Payme",
+    total_label: "Total",
+    btn_buy: "💳 Proceed to payment",
+    btn_copy: "📋 Copy",
+    btn_open: "🌐 Open",
+    btn_refresh: "🔄 Refresh",
+    traffic_used: "📊 Used traffic",
+    exp_label: "📅 Subscription expires",
+    sub_link_title: "Subscription link",
+    no_configs: "No configurations found 😴",
+    copied: "📋 Copied!",
+    copied_btn: "✅ Copied",
+    days: " days",
+    expired: "Expired",
+    unlimited: "Unlimited",
+    status_active: "✅ Active",
+    status_limited: "⚠️ Limited",
+    status_disabled: "❌ Disabled",
+    status_expired: "⏰ Expired",
+    err_no_tg: "Telegram ID not found. Open via bot.",
+    err_not_found: "This Telegram account was not found in the panel.\nContact the administrator.",
+    err_other: "Error: ",
+    err_cors: "\n\nCheck panel CORS settings.",
+    buy_loading: "⏳ Loading...",
+    buy_demo: "💳 Payment system not connected",
+    per_month: "/mo",
+    hot: "🔥 Popular",
+    online: "Online",
+    offline: "Offline",
+    plan_basic: "Basic", plan_pro: "Pro", plan_ultra: "Ultra",
+    ml_1: "1 mo", ml_3: "3 mo", ml_12: "1 yr",
+  }
+};
+
+// ══════════════════════════════════════════
+//  PRICES  (UZS / RUB)
+// ══════════════════════════════════════════
+const PRICES = {
+  uzs: { basic: 150000, pro: 250000, ultra: 450000, sym: "so'm" },
+  rub: { basic: 149,    pro: 249,    ultra: 449,    sym: "руб" }
+};
+const DISC = { 1:1, 3:.9, 12:.75 };
+
+// ── State ──
+let lang = 'uz';
+let cur  = 'uzs';
+let plan = 'pro';
+let period = 1;
+
+// ── Detect Telegram language ──
+(()=>{
+  const tgLang = tg?.initDataUnsafe?.user?.language_code || navigator.language || 'uz';
+  if(tgLang.startsWith('ru')) lang='ru';
+  else if(tgLang.startsWith('en')) lang='en';
+  else lang='uz';
+  const saved = localStorage.getItem('rw_lang');
+  if(saved && T[saved]) lang=saved;
+  const savedCur = localStorage.getItem('rw_cur');
+  if(savedCur && PRICES[savedCur]) cur=savedCur;
+})();
+
+// ── i18n apply ──
+function applyLang(){
+  const t = T[lang];
+  // Update lang buttons
+  document.querySelectorAll('.lang-btn').forEach(b=>{
+    b.classList.toggle('on', b.textContent.toLowerCase()===lang ||
+      (lang==='uz'&&b.textContent==='UZ')||(lang==='ru'&&b.textContent==='RU')||(lang==='en'&&b.textContent==='EN'));
+  });
+  // Update all data-i elements
+  document.querySelectorAll('[data-i]').forEach(el=>{
+    const key=el.getAttribute('data-i');
+    if(t[key]) el.textContent=t[key];
+  });
+  // hot badge
+  document.querySelectorAll('.plan.hot').forEach(p=>p.setAttribute('data-hot', t.hot));
+  // loader text
+  document.getElementById('load-txt').textContent=t.load;
+  // dot labels
+  const dlbl=document.getElementById('dot-lbl');
+  if(dlbl.textContent===T[lang==='uz'?'ru':lang==='ru'?'en':'uz'].online) dlbl.textContent=t.online;
+  if(dlbl.textContent===T[lang==='uz'?'ru':lang==='ru'?'en':'uz'].offline) dlbl.textContent=t.offline;
+  updTotal();
+}
+
+function setLang(l){
+  lang=l; localStorage.setItem('rw_lang',l); applyLang();
+  toast(l==='uz'?'🇺🇿 O\'zbek tili':l==='ru'?'🇷🇺 Русский язык':'🇬🇧 English');
+}
+
+function setCur(c){
+  cur=c; localStorage.setItem('rw_cur',c);
+  document.querySelectorAll('.cur-btn').forEach(b=>{
+    b.classList.toggle('on', b.textContent.toLowerCase().includes(c==='uzs'?'uzs':'rub'));
+  });
+  updTotal();
+  toast(c==='uzs'?'🇺🇿 UZS — So\'m':'🇷🇺 RUB — Rubl');
+}
+
+// ══════════════════════════════════════════
+//  API
+// ══════════════════════════════════════════
+async function api(path){
+  const r = await fetch(PANEL+path,{
+    headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'}
+  });
+  if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error(e.message||'HTTP '+r.status); }
+  return r.json();
+}
+
+async function checkConn(){
+  const dot=document.getElementById('dot');
+  const lbl=document.getElementById('dot-lbl');
+  const t=T[lang];
+  try{
+    await api('/api/system/stats');
+    dot.className='dot on'; lbl.textContent=t.online; lbl.style.color='var(--green)';
+  }catch(e){
+    dot.className='dot off'; lbl.textContent=t.offline; lbl.style.color='var(--red)';
+  }
+}
+
+// ══════════════════════════════════════════
+//  LOAD VPN DATA
+// ══════════════════════════════════════════
+async function loadVPN(){
+  const t=T[lang];
+  showErr(false);
+  document.getElementById('cfgs-empty').style.display='none';
+  document.getElementById('cfgs').innerHTML='';
+
+  const tgId = tg?.initDataUnsafe?.user?.id;
+  if(!tgId){ showErr(t.err_no_tg); return; }
+
+  try{
+    const res = await api('/api/users/get-by-telegram-id/'+tgId);
+    const u = res.response || res;
+    renderUser(u);
+  }catch(e){
+    const msg=e.message||'';
+    if(msg.includes('404')||msg.toLowerCase().includes('not found')){
+      showErr(t.err_not_found);
+    } else {
+      showErr(t.err_other+msg+t.err_cors);
+    }
+  }
+}
+
+function renderUser(u){
+  const t=T[lang];
+  const tgU=tg?.initDataUnsafe?.user;
+  const nm=tgU?(tgU.first_name+' '+(tgU.last_name||'')).trim():(u.username||'User');
+  document.getElementById('u-name').textContent=nm;
+  document.getElementById('u-ava').textContent=nm[0]?.toUpperCase()||'U';
+  document.getElementById('u-un').textContent=u.username?'@'+u.username:'';
+
+  const sb=document.getElementById('u-status');
+  const sm={ACTIVE:{tx:t.status_active,c:'g'},LIMITED:{tx:t.status_limited,c:'y'},
+            DISABLED:{tx:t.status_disabled,c:'r'},EXPIRED:{tx:t.status_expired,c:'r'}};
+  const s=sm[u.status]||{tx:u.status,c:'y'};
+  sb.textContent=s.tx; sb.className='pill '+s.c;
+
+  const used=u.usedTrafficBytes||u.usedTraffic||0;
+  const lim=u.trafficLimitBytes||u.trafficLimit||0;
+  const usedGB=(used/1073741824).toFixed(2);
+  const limGB=lim>0?(lim/1073741824).toFixed(0)+' GB':t.unlimited;
+  document.getElementById('tr-txt').textContent=usedGB+' GB / '+limGB;
+  const pct=lim>0?Math.min(100,(used/lim)*100):3;
+  setTimeout(()=>{ document.getElementById('bar-f').style.width=pct+'%'; },300);
+
+  const expEl=document.getElementById('exp-date');
+  const dpEl=document.getElementById('days-pill');
+  const exp=u.expireAt||u.expiresAt||u.expire_at;
+  if(exp){
+    const d=new Date(exp);
+    const days=Math.ceil((d-Date.now())/86400000);
+    expEl.textContent=d.toLocaleDateString(lang==='ru'?'ru-RU':lang==='en'?'en-US':'uz-UZ');
+    dpEl.textContent=days>0?days+t.days:t.expired;
+    dpEl.className='pill '+(days>14?'g':days>3?'y':'r');
+  } else {
+    expEl.textContent=t.unlimited; dpEl.textContent='♾️'; dpEl.className='pill g';
+  }
+
+  const sUrl=u.subscriptionUrl||u.subUrl||u.sub_url||
+    (u.shortUuid?PANEL+'/api/sub/'+u.shortUuid:null);
+  if(sUrl){
+    document.getElementById('sub-card').style.display='block';
+    document.getElementById('sub-url').textContent=sUrl;
+  }
+
+  renderCfgs(u.links||u.configs||u.proxies||[], sUrl);
+}
+
+function renderCfgs(links,sUrl){
+  const t=T[lang];
+  const box=document.getElementById('cfgs');
+  box.innerHTML='';
+  const proto={
+    vless:{n:'VLESS',i:'🌐',c:'vless'},vmess:{n:'VMess',i:'🔷',c:'vmess'},
+    trojan:{n:'Trojan',i:'⚡',c:'trojan'},shadowsocks:{n:'SS',i:'🛡️',c:'ss'},ss:{n:'SS',i:'🛡️',c:'ss'}
+  };
+  let cnt=0;
+  links.forEach((lnk,i)=>{
+    const pk=Object.keys(proto).find(p=>lnk.startsWith(p+'://'));
+    const pm=pk?proto[pk]:{n:'Config',i:'🔗',c:'vless'};
+    const id='cl'+i;
+    box.insertAdjacentHTML('beforeend',`
+      <div class="cfg-item">
+        <div class="cfg-head">
+          <div class="cfg-name">${pm.i} ${pm.n} <span class="cfg-tag ${pm.c}">${pm.n}</span></div>
+        </div>
+        <div class="cfg-url" id="${id}">${lnk}</div>
+        <div class="row">
+          <button class="btn" onclick="cpCfg(this,'${id}')">${t.btn_copy}</button>
+          <button class="btn" onclick="openCfg('${id}')">${t.btn_open.replace('🌐 ','📱 ')}</button>
+        </div>
+      </div>`);
+    cnt++;
+  });
+  if(cnt===0&&sUrl){
+    const id='sub-cfg';
+    box.insertAdjacentHTML('beforeend',`
+      <div class="cfg-item">
+        <div class="cfg-head"><div class="cfg-name">🔗 SUB <span class="cfg-tag vless">SUB</span></div></div>
+        <div class="cfg-url" id="${id}">${sUrl}</div>
+        <div class="row">
+          <button class="btn" onclick="cpCfg(this,'${id}')">${t.btn_copy}</button>
+          <button class="btn" onclick="openCfg('${id}')">${t.btn_open.replace('🌐 ','📱 ')}</button>
+        </div>
+      </div>`);
+    cnt++;
+  }
+  document.getElementById('cfgs-empty').style.display=cnt===0?'block':'none';
+}
+
+// ── Actions ──
+function cpCfg(btn,id){
+  cp(document.getElementById(id).textContent);
+  const t=T[lang];
+  btn.classList.add('cp'); btn.textContent=t.copied_btn;
+  setTimeout(()=>{ btn.classList.remove('cp'); btn.textContent=t.btn_copy; },2000);
+}
+function openCfg(id){
+  const u=document.getElementById(id).textContent;
+  if(tg?.openLink) tg.openLink(u); else window.open(u,'_blank');
+}
+function cpSub(btn){
+  cp(document.getElementById('sub-url').textContent);
+  const t=T[lang];
+  btn.classList.add('cp'); btn.textContent=t.copied_btn;
+  setTimeout(()=>{ btn.classList.remove('cp'); btn.textContent=t.btn_copy; },2000);
+}
+function openSub(){
+  const u=document.getElementById('sub-url').textContent;
+  if(tg?.openLink) tg.openLink(u); else window.open(u,'_blank');
+}
+function cp(txt){
+  navigator.clipboard?.writeText(txt).catch(()=>{});
+  toast(T[lang].copied);
+}
+function showErr(msg){
+  const el=document.getElementById('vpn-err');
+  if(!msg){ el.style.display='none'; return; }
+  document.getElementById('vpn-err-msg').innerHTML=msg.replace(/\n/g,'<br>');
+  el.style.display='block';
+}
+
+// ── Plans ──
+function selPlan(p){
+  plan=p;
+  ['basic','pro','ultra'].forEach(x=>document.getElementById('pl-'+x).classList.toggle('sel',x===p));
+  updTotal();
+}
+function selPer(m,btn){
+  period=m;
+  document.querySelectorAll('.per').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel'); updTotal();
+}
+function selPay(btn){
+  document.querySelectorAll('.pay').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+function updTotal(){
+  const t=T[lang];
+  const pr=PRICES[cur];
+  const total=Math.round(pr[plan]*period*DISC[period]);
+  const fmt=cur==='uzs'
+    ? total.toLocaleString('uz-UZ')
+    : total.toLocaleString('ru-RU');
+  document.getElementById('tot-price').innerHTML=fmt+' <span id="cur-sym">'+pr.sym+'</span>';
+  // update plan prices
+  ['basic','pro','ultra'].forEach(pl=>{
+    const pEl=document.getElementById('pp-'+pl);
+    if(pEl){
+      const pv=pr[pl].toLocaleString(cur==='uzs'?'uz-UZ':'ru-RU');
+      pEl.innerHTML=pv+' <small>'+pr.sym+t.per_month+'</small>';
+    }
+  });
+  document.getElementById('tot-desc').textContent=t['plan_'+plan]+' • '+t['ml_'+period];
+}
+function doBuy(){
+  const t=T[lang];
+  const btn=document.getElementById('buy-btn');
+  btn.disabled=true; btn.textContent=t.buy_loading;
+  setTimeout(()=>{ btn.disabled=false; btn.textContent=t.btn_buy; toast(t.buy_demo); },1400);
+}
+
+// ── Tabs ──
+function showTab(name){
+  ['plans','vpn'].forEach(n=>{
+    document.getElementById('pg-'+n).classList.toggle('on',n===name);
+    document.getElementById('tab-'+n).classList.toggle('on',n===name);
+  });
+  if(name==='vpn') loadVPN();
+}
+
+// ── Loader ──
+function hideLoader(){ document.getElementById('loader').classList.add('hide'); }
+
+// ── Toast ──
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+(async()=>{
+  applyLang();
+  // set cur buttons
+  document.querySelectorAll('.cur-btn').forEach(b=>{
+    b.classList.toggle('on', b.textContent.toLowerCase().includes(cur==='uzs'?'uzs':'rub'));
+  });
+  selPlan('pro');
+  updTotal();
+  await checkConn();
+  hideLoader();
+})();
+</script>
+</body>
+</html>
