@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="ru">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
@@ -40,12 +40,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .lang-btn{padding:3px 7px;border:none;background:none;cursor:pointer;font-family:inherit;
   font-size:11px;font-weight:600;color:var(--muted);border-radius:5px;transition:all .2s}
 .lang-btn.on{background:var(--accent);color:#fff}
-
-/* CURRENCY SWITCHER */
-.cur-sw{display:flex;gap:3px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:3px}
-.cur-btn{padding:3px 7px;border:none;background:none;cursor:pointer;font-family:inherit;
-  font-size:11px;font-weight:600;color:var(--muted);border-radius:5px;transition:all .2s}
-.cur-btn.on{background:var(--green);color:#fff}
 
 /* CONN DOT */
 .dot-wrap{display:flex;align-items:center;gap:5px;font-size:11px}
@@ -160,7 +154,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .per-s{font-size:9px;color:var(--green);display:block;margin-top:2px}
 
 /* PAY */
-.pays{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+.pays{display:grid;grid-template-columns:1fr;gap:6px;margin-bottom:14px}
 .pay{padding:10px;background:var(--card);border:1.5px solid var(--border);
   border-radius:10px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;
   color:var(--muted);display:flex;align-items:center;justify-content:center;gap:5px;transition:all .2s}
@@ -210,11 +204,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <button class="lang-btn" onclick="setLang('ru')">RU</button>
       <button class="lang-btn" onclick="setLang('en')">EN</button>
     </div>
-    <!-- Currency -->
-    <div class="cur-sw">
-      <button class="cur-btn on" onclick="setCur('uzs')">UZS</button>
-      <button class="cur-btn" onclick="setCur('rub')">RUB</button>
-    </div>
     <!-- Dot -->
     <div class="dot-wrap">
       <div class="dot" id="dot"></div>
@@ -237,7 +226,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   <div class="plan hot sel" id="pl-pro" data-hot="🔥 Mashhur" onclick="selPlan('pro')">
     <div class="plan-h">
       <div class="plan-n">🚀 Pro</div>
-      <div class="plan-p" id="pp-pro">250 000 <small id="cur-lbl-pro">so'm/oy</small></div>
+      <div class="plan-p" id="pp-pro">249 <small id="cur-lbl-pro">руб/мес</small></div>
     </div>
     <div class="tags">
       <span class="tg hi" data-i="unlimited_traffic">♾️ Cheksiz traffic</span>
@@ -250,7 +239,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   <div class="plan" id="pl-basic" onclick="selPlan('basic')">
     <div class="plan-h">
       <div class="plan-n">⚡ Basic</div>
-      <div class="plan-p" id="pp-basic">150 000 <small id="cur-lbl-basic">so'm/oy</small></div>
+      <div class="plan-p" id="pp-basic">149 <small id="cur-lbl-basic">руб/мес</small></div>
     </div>
     <div class="tags">
       <span class="tg">📦 50 GB</span>
@@ -262,7 +251,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   <div class="plan" id="pl-ultra" onclick="selPlan('ultra')">
     <div class="plan-h">
       <div class="plan-n">👑 Ultra</div>
-      <div class="plan-p" id="pp-ultra">450 000 <small id="cur-lbl-ultra">so'm/oy</small></div>
+      <div class="plan-p" id="pp-ultra">449 <small id="cur-lbl-ultra">руб/мес</small></div>
     </div>
     <div class="tags">
       <span class="tg hi" data-i="unlimited_traffic">♾️ Cheksiz traffic</span>
@@ -281,10 +270,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
   <div class="sec" data-i="sec_pay"></div>
   <div class="pays">
-    <button class="pay sel" onclick="selPay(this)" data-i="pay_card">💳 Karta</button>
-    <button class="pay" onclick="selPay(this)">⭐ Stars</button>
-    <button class="pay" onclick="selPay(this)">₿ Crypto</button>
-    <button class="pay" onclick="selPay(this)" data-i="pay_payme">🅿️ Payme</button>
+    <button class="pay sel" onclick="selPay(this)" data-i="pay_card">💳 Карта (LAVA)</button>
   </div>
 
   <div class="total">
@@ -292,7 +278,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="tot-lbl" data-i="total_label">Jami to'lov</div>
       <div class="tot-desc" id="tot-desc">Pro • 1 oy</div>
     </div>
-    <div class="tot-price" id="tot-price">250 000 <span id="cur-sym">so'm</span></div>
+    <div class="tot-price" id="tot-price">249 <span id="cur-sym">руб</span></div>
   </div>
 
   <button class="btn-main" id="buy-btn" onclick="doBuy()" data-i="btn_buy">💳 To'lovga o'tish</button>
@@ -380,8 +366,7 @@ const T = {
     per_1: "1 oy",
     per_3: "3 oy",
     per_12: "1 yil",
-    pay_card: "💳 Karta",
-    pay_payme: "🅿️ Payme",
+    pay_card: "💳 Karta (LAVA)",
     total_label: "Jami to'lov",
     btn_buy: "💳 To'lovga o'tish",
     btn_copy: "📋 Nusxa",
@@ -432,8 +417,7 @@ const T = {
     per_1: "1 мес",
     per_3: "3 мес",
     per_12: "1 год",
-    pay_card: "💳 Карта",
-    pay_payme: "🅿️ Payme",
+    pay_card: "💳 Карта (LAVA)",
     total_label: "Итого к оплате",
     btn_buy: "💳 Перейти к оплате",
     btn_copy: "📋 Копировать",
@@ -484,8 +468,7 @@ const T = {
     per_1: "1 mo",
     per_3: "3 mo",
     per_12: "1 yr",
-    pay_card: "💳 Card",
-    pay_payme: "🅿️ Payme",
+    pay_card: "💳 Card (LAVA)",
     total_label: "Total",
     btn_buy: "💳 Proceed to payment",
     btn_copy: "📋 Copy",
@@ -520,30 +503,28 @@ const T = {
 };
 
 // ══════════════════════════════════════════
-//  PRICES  (UZS / RUB)
+//  PRICES  (RUB only)
 // ══════════════════════════════════════════
 const PRICES = {
-  uzs: { basic: 150000, pro: 250000, ultra: 450000, sym: "so'm" },
-  rub: { basic: 149,    pro: 249,    ultra: 449,    sym: "руб" }
+  rub: { basic: 149, pro: 249, ultra: 449, sym: "руб" }
 };
 const DISC = { 1:1, 3:.9, 12:.75 };
 
 // ── State ──
-let lang = 'uz';
-let cur  = 'uzs';
+let lang = 'ru';
+let cur  = 'rub';
 let plan = 'pro';
 let period = 1;
 
 // ── Detect Telegram language ──
 (()=>{
-  const tgLang = tg?.initDataUnsafe?.user?.language_code || navigator.language || 'uz';
+  const tgLang = tg?.initDataUnsafe?.user?.language_code || navigator.language || 'ru';
   if(tgLang.startsWith('ru')) lang='ru';
   else if(tgLang.startsWith('en')) lang='en';
-  else lang='uz';
+  else if(tgLang.startsWith('uz')) lang='uz';
+  else lang='ru';
   const saved = localStorage.getItem('rw_lang');
   if(saved && T[saved]) lang=saved;
-  const savedCur = localStorage.getItem('rw_cur');
-  if(savedCur && PRICES[savedCur]) cur=savedCur;
 })();
 
 // ── i18n apply ──
@@ -573,15 +554,6 @@ function applyLang(){
 function setLang(l){
   lang=l; localStorage.setItem('rw_lang',l); applyLang();
   toast(l==='uz'?'🇺🇿 O\'zbek tili':l==='ru'?'🇷🇺 Русский язык':'🇬🇧 English');
-}
-
-function setCur(c){
-  cur=c; localStorage.setItem('rw_cur',c);
-  document.querySelectorAll('.cur-btn').forEach(b=>{
-    b.classList.toggle('on', b.textContent.toLowerCase().includes(c==='uzs'?'uzs':'rub'));
-  });
-  updTotal();
-  toast(c==='uzs'?'🇺🇿 UZS — So\'m':'🇷🇺 RUB — Rubl');
 }
 
 // ══════════════════════════════════════════
@@ -620,8 +592,8 @@ async function loadVPN(){
   if(!tgId){ showErr(t.err_no_tg); return; }
 
   try{
-    const res = await api('/api/users/get-by-telegram-id/'+tgId);
-    const u = res.response || res;
+    const res = await api('/api/users/by-telegram-id/'+tgId);
+    const u = res.response?.[0] || res.response || res;
     renderUser(u);
   }catch(e){
     const msg=e.message||'';
@@ -769,18 +741,13 @@ function selPay(btn){
 }
 function updTotal(){
   const t=T[lang];
-  const pr=PRICES[cur];
+  const pr=PRICES.rub;
   const total=Math.round(pr[plan]*period*DISC[period]);
-  const fmt=cur==='uzs'
-    ? total.toLocaleString('uz-UZ')
-    : total.toLocaleString('ru-RU');
-  document.getElementById('tot-price').innerHTML=fmt+' <span id="cur-sym">'+pr.sym+'</span>';
-  // update plan prices
+  document.getElementById('tot-price').innerHTML=total.toLocaleString('ru-RU')+' <span id="cur-sym">'+pr.sym+'</span>';
   ['basic','pro','ultra'].forEach(pl=>{
     const pEl=document.getElementById('pp-'+pl);
     if(pEl){
-      const pv=pr[pl].toLocaleString(cur==='uzs'?'uz-UZ':'ru-RU');
-      pEl.innerHTML=pv+' <small>'+pr.sym+t.per_month+'</small>';
+      pEl.innerHTML=pr[pl].toLocaleString('ru-RU')+' <small>'+pr.sym+t.per_month+'</small>';
     }
   });
   document.getElementById('tot-desc').textContent=t['plan_'+plan]+' • '+t['ml_'+period];
@@ -816,10 +783,6 @@ function toast(msg){
 // ══════════════════════════════════════════
 (async()=>{
   applyLang();
-  // set cur buttons
-  document.querySelectorAll('.cur-btn').forEach(b=>{
-    b.classList.toggle('on', b.textContent.toLowerCase().includes(cur==='uzs'?'uzs':'rub'));
-  });
   selPlan('pro');
   updTotal();
   await checkConn();
